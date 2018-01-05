@@ -11,11 +11,11 @@ It works by using */proc/kallsyms* to find system call table and checking whethe
 system call found by exploiting MELTDOWN match the respective one in */proc/kallsyms*.
 
 #### Getting started
-Make
+Run make
 
 or
 
-Compile it as follow:
+Compile it as follow
 ```
 g++ --std=c++11 meltdown_checker.cc -o meltdown-checker -O0 --no-pie -mrtm;
 ```
