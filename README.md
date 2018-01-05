@@ -6,6 +6,8 @@ Checks whether system is affected by Variant 3: rogue data cache load (CVE-2017-
 
 *** Only works on Linux for now ***
 
+NOTE: meltdown-checker currently requires user to have a modern cpu with TSX (Transactional Synchronization Extensions).
+
 #### How it works?
 It works by using */proc/kallsyms* to find system call table and checking whether the address of a
 system call found by exploiting MELTDOWN match the respective one in */proc/kallsyms*.
