@@ -161,7 +161,36 @@ static uintptr_t symbol_map_reverse_search(const std::unordered_map<uintptr_t, s
     abort();
 }
 
+static void require_TSX() {
+    static constexpr int hle_mask = 1<<4;
+    static constexpr int rtm_mask = 1<<11;
+
+    unsigned eax = 7;
+    unsigned ebx = 0;
+    unsigned ecx = 0;
+
+    __asm__ __volatile__ ( "movl %%ebx, %%esi\n"
+                           "cpuid\n"
+                           "movl %%ebx, %0\n"
+                           "movl %%esi, %%ebx\n"
+                           : "=a"(ebx) : "0" (eax), "c" (ecx) : "esi",
+                           "ebx",
+                           "edx"
+                           );
+    bool has_hle = (ebx & hle_mask) != 0;
+    bool has_rtm = (ebx & rtm_mask) != 0;
+
+    if (!has_hle || !has_rtm) {
+        printf("Your cpu doesn't support TSX (Transactional Synchronization Extensions)\n" \
+            "Check https://software.intel.com/en-us/node/524022 for details;\n");
+        abort();
+    }
+}
+
 int main(int argc, char** argv) {
+    // TODO: do not require TSX to run checker anymore.
+    require_TSX();
+
     auto mem = static_cast<char*>(mmap(nullptr, mem_size(), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0));
 
     if (mem == MAP_FAILED) {
