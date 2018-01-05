@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-I. --std=c++11 -O0 --no-pie -mrtm
+CFLAGS=-I. --std=c++11 -O0 --no-pie -mrtm -fPIC
 OBJ=meltdown_checker.o
 
 %.o: %.cc
