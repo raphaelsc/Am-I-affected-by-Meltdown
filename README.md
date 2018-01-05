@@ -7,12 +7,18 @@ Checks whether system is affected by Variant 3: rogue data cache load (CVE-2017-
 *** Only works on Linux for now ***
 
 #### How it works?
-It works by using */proc/kallsyms* to find system call table and checks whether the address of table
-entries found by exploiting MELTDOWN match the ones in */proc/kallsyms*.
+It works by using */proc/kallsyms* to find system call table and checking whether the address of a
+system call found by exploiting MELTDOWN match the respective one in */proc/kallsyms*.
 
 #### Getting started
-Compile it as follow
-g++ --std=c++11 meltdown_checker.cc -o meltdown_checker -O0 --no-pie -mrtm;
+Make
+
+or
+
+Compile it as follow:
+```
+g++ --std=c++11 meltdown_checker.cc -o meltdown-checker -O0 --no-pie -mrtm;
+```
 
 #### Example output for a system affected by Meltdown:
 
