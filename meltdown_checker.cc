@@ -63,7 +63,7 @@ static inline unsigned page_size() {
 }
 
 static inline unsigned mem_size() {
-    return total_pages * getpagesize();
+    return total_pages * page_size();
 }
 
 //
