@@ -71,9 +71,9 @@ unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* buf) {
     int min_duration = std::numeric_limits<int>::max();
 
     for (auto c = 0; c < syscall_table_entry_read_retries; c++) {
-        if (__builtin_ia32_xbegin() == _XBEGIN_STARTED) {
+        if (_xbegin() == _XBEGIN_STARTED) {
             __speculative_byte_load(ptr, buf);
-            __builtin_ia32_xend();
+            _xend();
         } else {
             // nothing
         }
