@@ -54,7 +54,7 @@ static const char* syscall_table_symbol_entry_prefix = "sys_";
 static constexpr unsigned syscall_table_entries = 10;
 static constexpr size_t syscall_table_entry_read_retries = 5;
 
-static unsigned page_size() {
+static inline unsigned page_size() {
     static unsigned __page_size = 0;
     if (!__page_size) {
         __page_size = getpagesize();
@@ -62,18 +62,18 @@ static unsigned page_size() {
     return __page_size;
 }
 
-static unsigned mem_size() {
+static inline unsigned mem_size() {
     return total_pages * getpagesize();
 }
 
-unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* buf) {
+static unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* buf) {
     std::array<unsigned long, total_pages> durations;
     int min_duration = 0;
 
     for (auto c = 0; c < syscall_table_entry_read_retries; c++) {
         durations = { 0 };
 
-        for (auto i = 0; i< total_pages; i++) {
+        for (auto i = 0; i < total_pages; i++) {
             __clflush(&buf[i * page_size()]);
         }
 
