@@ -43,14 +43,18 @@
 #include <immintrin.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/utsname.h>
 #include "assembly_utils.hh"
 
-static constexpr size_t total_pages = 256;
+static const char* kernel_symbols_file = "/proc/kallsyms";
+static const char* system_map_file_prefix = "/boot/System.map-";
 static const char* syscall_table_symbol = "sys_call_table";
 static const char* syscall_table_symbol_entry_prefix = "sys_";
+
 // TODO: include linux header that define amount of addresses to read.
-static constexpr unsigned syscall_table_entries = 10;
+static constexpr unsigned syscall_table_entries = 50;
 static constexpr size_t syscall_table_entry_read_retries = 5;
+static constexpr size_t total_pages = 256;
 
 static inline unsigned page_size() {
     static unsigned __page_size = 0;
@@ -133,14 +137,14 @@ static bool check_one_syscall_table_address(uintptr_t target_address, char* mem,
 }
 
 //
-// Builds a map of pointer to symbol from /proc/kallsyms
+// Builds a map of pointer to symbol from a symbol map file like /proc/kallsyms
 //
-static std::unordered_map<uintptr_t, std::string> build_symbol_map() {
+static std::unordered_map<uintptr_t, std::string> build_symbol_map(std::string fname) {
     std::unordered_map<uintptr_t, std::string> symbol_map;
 
-    std::ifstream infile("/proc/kallsyms");
+    std::ifstream infile(fname);
     if (!infile.is_open()) {
-        std::cout << "Failed to open /proc/kallsyms. Unable to proceed.\n";
+        std::cout << "Failed to open " << fname << ". Unable to proceed.\n";
         abort();
     }
 
@@ -162,8 +166,7 @@ static std::unordered_map<uintptr_t, std::string> build_symbol_map() {
     }
     // TODO: fallback to another method if /proc/kallsyms cannot be read.
     if (!non_zero_addr) {
-        std::cout << "Unable to read /proc/kallsyms. That means your system doesn't allow non-root programs to read the file.\n" \
-            "Check issue https://github.com/raphaelsc/Am-I-affected-by-Meltdown/issues/2 for details.\n" \
+        std::cout << "Unable to read " << fname << ". That means your system doesn't allow non-root programs to read the file.\n" \
             "By the time being, consider running meltdown_checker as root to verify if your system is affected by Meltdown.\n";
         abort();
     }
@@ -176,8 +179,7 @@ static uintptr_t symbol_map_reverse_search(const std::unordered_map<uintptr_t, s
             return p.first;
         }
     }
-    std::cout << "Unable to find symbol " << symbol << " in symbol map. Aborting...";
-    abort();
+    return 0;
 }
 
 static void require_TSX() {
@@ -217,8 +219,32 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto symbol_map = build_symbol_map();
+    auto symbol_map = build_symbol_map(kernel_symbols_file);
     auto target_address = symbol_map_reverse_search(symbol_map, syscall_table_symbol);
+    if (!target_address) {
+        // TODO: find a better alternative than /boot/system_map which requires root.
+        // A possible idea is described by Raphael in https://github.com/raphaelsc/Am-I-affected-by-Meltdown/issues/2
+
+        std::cout << "Unable to find symbol " << syscall_table_symbol << " in " << kernel_symbols_file << std::endl;
+
+        // Unable to find syscall table symbol in kernel_symbols_file, so falling back on
+        // System.map file stored in /boot, root is required though.
+        struct utsname uts;
+        auto r = uname(&uts);
+        if (r == -1) {
+            printf("uname() failed: %s\n", strerror(errno));
+            return -1;
+        }
+        std::string system_map_fname = system_map_file_prefix + std::string(uts.release);
+        std::cout << "Falling back on the alternative symbol map file (usually requires root permission): " << system_map_fname << "..." << std::endl;
+
+        symbol_map = build_symbol_map(system_map_fname);
+        target_address = symbol_map_reverse_search(symbol_map, syscall_table_symbol);
+        if (!target_address) {
+            std::cout << "Also unable to find symbol " << syscall_table_symbol << "in alternative symbol map file :-(" << std::endl;
+            abort();
+        }
+    }
 
     std::cout << "Checking whether system is affected by Variant 3: rogue data cache load (CVE-2017-5754), a.k.a MELTDOWN ...\n";
 
