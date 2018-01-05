@@ -45,8 +45,6 @@
 #include <unistd.h>
 #include "assembly_utils.hh"
 
-#define __DEBUG__
-
 static constexpr size_t total_pages = 256;
 static const char* syscall_table_symbol = "sys_call_table";
 static const char* syscall_table_symbol_entry_prefix = "sys_";
@@ -147,6 +145,7 @@ static std::unordered_map<uintptr_t, std::string> build_symbol_map() {
     }
 
     std::string line;
+    bool non_zero_addr = false;
 
     while (std::getline(infile, line)) {
         std::istringstream iss(line);
@@ -157,8 +156,16 @@ static std::unordered_map<uintptr_t, std::string> build_symbol_map() {
             std::cout << "error in line: " << line << std::endl;
             abort();
         } // error
+        non_zero_addr |= addr;
 
         symbol_map.emplace(addr, std::move(symbol));
+    }
+    // TODO: fallback to another method if /proc/kallsyms cannot be read.
+    if (!non_zero_addr) {
+        std::cout << "Unable to read /proc/kallsyms. That means your system doesn't allow non-root programs to read the file.\n" \
+            "Check issue https://github.com/raphaelsc/Am-I-affected-by-Meltdown/issues/2 for details.\n" \
+            "By the time being, consider running meltdown_checker as root to verify if your system is affected by Meltdown.\n";
+        abort();
     }
     return symbol_map;
 }
@@ -216,7 +223,6 @@ int main(int argc, char** argv) {
     std::cout << "Checking whether system is affected by Variant 3: rogue data cache load (CVE-2017-5754), a.k.a MELTDOWN ...\n";
 
     printf("Checking syscall table (sys_call_table) found at address 0x%016lx ...\n", (uintptr_t)target_address);
-
 
     for (auto entry = 0; entry < syscall_table_entries; entry++) {
         auto ret = check_one_syscall_table_address(target_address + entry * sizeof(uintptr_t), mem, symbol_map);
