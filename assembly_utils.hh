@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Raphael S. Carvalho <raphael.scarv@gmail.com>
+ * Copyright (c) 2018, Raphael S. Carvalho <raphaelsc@scylladb.com>
  * All rights reserved.
  *
  *Redistribution and use in source and binary forms, with or without
