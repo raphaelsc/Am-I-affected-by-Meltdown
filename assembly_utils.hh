@@ -55,7 +55,7 @@ inline void __speculative_byte_load(uintptr_t addr, char* dest) {
 }
 
 __attribute__((always_inline))
-inline unsigned long __speculative_loaded_byte_probe(const char *address) {
+inline unsigned long __measure_load_execution(const char *address) {
     volatile unsigned long duration;
     asm __volatile__ (
         "mfence             \n"

