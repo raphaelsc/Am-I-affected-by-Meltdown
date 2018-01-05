@@ -75,7 +75,7 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
     std::array<unsigned long, total_pages> durations;
     uint8_t index = 0;
 
-    for (auto c = 0; c < syscall_table_entry_read_retries; c++) {
+    for (auto r = 0; r < syscall_table_entry_read_retries; r++) {
         durations = { 0 };
 
         for (auto i = 0; i < total_pages; i++) {
