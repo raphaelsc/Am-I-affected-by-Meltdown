@@ -3,8 +3,11 @@
 ![Alt text](https://github.com/raphaelsc/Am-I-affected-by-Meltdown/blob/master/images/melting.jpg)
 
 #### What am I?
+
 Proof-of-concept /
+
 Exploit /
+
 Checks whether system is affected by Variant 3: rogue data cache load (CVE-2017-5754), a.k.a MELTDOWN.
 
 *** Only works on Linux for now ***
