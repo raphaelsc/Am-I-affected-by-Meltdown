@@ -152,7 +152,8 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
         // TODO: terrible workaround to prevent endless loop in patched systems and still make it work
         // for non patched systems; find a way to fix it!
         if (!incr && useless_iterations++ == max_useless_iterations) {
-            status = -1;
+            // do not throw away old work when bailing out
+            status = (r) ? 0 : -1;
             break;
         }
     }
