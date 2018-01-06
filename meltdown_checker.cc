@@ -58,7 +58,7 @@ static const char* system_map_file_prefix = "/boot/System.map-";
 static const char* syscall_table_symbol = "sys_call_table";
 static const char* syscall_table_symbol_entry_prefix = "sys_";
 
-static constexpr unsigned syscall_table_entries = 10; // no need to look for more than 5 entries to determine if system is vulnerable
+static constexpr unsigned syscall_table_entries = 10; // look only a few entries to determine if system is vulnerable.
 static constexpr size_t syscall_table_entry_read_retries = 5;
 static constexpr size_t total_pages = 256;
 
