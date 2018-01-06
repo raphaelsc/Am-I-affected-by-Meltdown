@@ -6,11 +6,18 @@ Checks whether system is affected by Variant 3: rogue data cache load (CVE-2017-
 
 *** Only works on Linux for now ***
 
-NOTE: meltdown-checker currently requires user to have a modern cpu with TSX (Transactional Synchronization Extensions).
-
 #### How it works?
 It works by using */proc/kallsyms* to find system call table and checking whether the address of a
 system call found by exploiting MELTDOWN match the respective one in */proc/kallsyms*.
+
+#### What to do when you face this error "Unable to read /proc/kallsyms..."
+That's because your system may be preventing the program from reading kernel symbols in /proc/kallsyms
+due to /proc/sys/kernel/kptr_restrict set to 1.
+The following command will do the tricky:
+```
+sudo sh -c "echo 0  > /proc/sys/kernel/kptr_restrict"
+```
+Please open an issue if you have an idea on how to fallback to another approach in this scenario.
 
 #### Getting started
 Run *make* to compile the project
