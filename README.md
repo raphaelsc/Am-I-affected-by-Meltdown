@@ -10,6 +10,9 @@ Exploit /
 
 Checks whether system is affected by Variant 3: rogue data cache load (CVE-2017-5754), a.k.a MELTDOWN.
 
+The basic idea is that user will know whether or not the running system is properly patched with
+something like KAISER patchset (https://lkml.org/lkml/2017/10/31/884) for example.
+
 *** Only works on Linux for now ***
 
 #### How it works?
