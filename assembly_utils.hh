@@ -29,6 +29,19 @@
 
 #pragma once
 
+// TODO: make it more reusable.
+__attribute__((always_inline))
+inline void __cpu_id(unsigned& eax, unsigned& ebx, unsigned& ecx) {
+    __asm__ __volatile__ ( "movl %%ebx, %%esi\n"
+                           "cpuid\n"
+                           "movl %%ebx, %0\n"
+                           "movl %%esi, %%ebx\n"
+                           : "=a"(ebx) : "0" (eax), "c" (ecx) : "esi",
+                           "ebx",
+                           "edx"
+                           );
+}
+
 __attribute__((always_inline))
 inline void __clflush(const char *address)
 {
@@ -40,15 +53,21 @@ inline void __clflush(const char *address)
         :            );
 }
 
-__attribute__((always_inline))
+// label defined in asm inline for loading kernel address, which purpose is
+// to help with software-based trap mitigation, when TSX isn't available.
+extern char __speculative_byte_load_exit[];
+
 inline void __speculative_byte_load(uintptr_t addr, char* dest) {
     asm __volatile__ (
+        ".global __speculative_byte_load_exit \n\t"
         "%=:                              \n"
         "xorq %%rax, %%rax                \n"
         "movb (%[addr]), %%al              \n"
         "shlq $0xc, %%rax                 \n"
         "jz %=b                           \n"
         "movq (%[dest], %%rax, 1), %%rbx   \n"
+        "__speculative_byte_load_exit:     \n"
+        "nop                               \n"
         : 
         :  [addr] "r" (addr), [dest] "r" (dest)
         :  "%rax", "%rbx");
