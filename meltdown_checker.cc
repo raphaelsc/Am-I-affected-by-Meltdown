@@ -305,6 +305,8 @@ int main(int argc, char** argv) {
             std::cout << "\nSystem affected! Please consider upgrading your kernel to one that is patched with KAISER\n";
             std::cout << "Check https://security.googleblog.com/2018/01/todays-cpu-vulnerability-what-you-need.html for more details\n";
             goto out;
+        } else {
+            std::cout << "so far so good...\n";
         }
     }
     std::cout << "\nSystem not affected. Congratulations!\n";
