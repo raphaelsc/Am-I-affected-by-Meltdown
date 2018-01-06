@@ -314,7 +314,8 @@ int main(int argc, char** argv) {
             std::cout << "so far so good (i.e. meltdown safe) ...\n";
         }
     }
-    std::cout << "\nSystem not affected. Congratulations!\n";
+    std::cout << "\nSystem not affected (take it with a grant of salt though as false negative may be reported for specific environments; " \
+        "Please consider running it once again).\n";
 out:
     return munmap(static_cast<void*>(mem), mem_size());
 }
