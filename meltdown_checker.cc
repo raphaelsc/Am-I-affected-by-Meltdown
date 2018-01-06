@@ -66,7 +66,7 @@ static constexpr size_t total_pages = 256;
 // whether or not CPU supports Transactional Synchronization Extensions
 // usually available from Intel Haswell generation on.
 static bool g_tsx_supported = false;
-// TODO: calculate cache hit threshold in run time by averaring the access
+// TODO: calculate cache hit threshold in run time by averaging the access
 // to cached and uncached data.
 static const size_t g_cache_hit_threshold = 80;
 
