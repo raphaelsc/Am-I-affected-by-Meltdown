@@ -168,8 +168,6 @@ static bool validate_syscall_table_entry(const void* data, const std::unordered_
     uint64_t* entry = (uint64_t*) data;
     uintptr_t ptr = reinterpret_cast<uintptr_t>(entry[0]);
 
-    printf("0x%016lx -> That's %s\n", (uintptr_t)ptr, symbol_map.count(ptr) ? symbol_map.at(ptr).c_str() : "unknown");
-
     if (symbol_map.count(ptr)) {
         auto symbol = symbol_map.at(ptr);
         std::transform(symbol.begin(), symbol.end(), symbol.begin(), ::tolower);
@@ -177,6 +175,7 @@ static bool validate_syscall_table_entry(const void* data, const std::unordered_
         if (ret > 0 || ret == std::string::npos) {
             return false;
         }
+        printf("0x%016lx -> That's %s\n", (uintptr_t)ptr, symbol_map.count(ptr) ? symbol_map.at(ptr).c_str() : "unknown");
         return true;
     }
     return false;
@@ -312,7 +311,7 @@ int main(int argc, char** argv) {
             std::cout << "Check https://security.googleblog.com/2018/01/todays-cpu-vulnerability-what-you-need.html for more details\n";
             goto out;
         } else {
-            std::cout << "so far so good...\n";
+            std::cout << "so far so good (i.e. meltdown safe) ...\n";
         }
     }
     std::cout << "\nSystem not affected. Congratulations!\n";
