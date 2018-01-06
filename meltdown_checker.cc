@@ -210,8 +210,9 @@ static std::unordered_map<uintptr_t, std::string> build_symbol_map(std::string f
     }
     // TODO: fallback to another method if /proc/kallsyms cannot be read.
     if (!non_zero_addr) {
-        std::cout << "Unable to read " << fname << ". That means your system doesn't allow non-root programs to read the file.\n" \
-            "By the time being, consider running the program as root to verify if your system is affected by Meltdown.\n";
+        std::cout << "Unable to read " << fname << ". That means your system doesn't allow non-root or any program to read the file.\n" \
+            "Your options are either running the program as root *OR* setting /proc/sys/kernel/kptr_restrict to 0, as follow:\n" \
+            "sudo sh -c \"echo 0  > /proc/sys/kernel/kptr_restrict\"\n";
         abort();
     }
     return symbol_map;
