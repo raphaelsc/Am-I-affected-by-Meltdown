@@ -141,6 +141,7 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
                 // to lack of actual retries, but we still want to account for all durations which met
                 // the threshold for when inferring the byte read from kernel address.
                 if (!incr) {
+                    status = 0;
                     useless_iterations = 0;
                     r++;
                     incr = true;
@@ -155,7 +156,6 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
             break;
         }
     }
-    status = 0;
     // Returns the index which was more frequently chosen.
     return std::distance(index_heat.begin(), std::max_element(index_heat.begin(), index_heat.end()));
 }
