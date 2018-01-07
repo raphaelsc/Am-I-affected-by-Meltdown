@@ -307,7 +307,7 @@ int main(int argc, char** argv) {
     for (auto entry = 0; entry < syscall_table_entries; entry++) {
         auto ret = check_one_syscall_table_address(target_address + entry * sizeof(uintptr_t), mem, symbol_map);
         if (ret) {
-            std::cout << "\nSystem affected! Please consider upgrading your kernel to one that is patched with KAISER\n";
+            std::cout << "\nSystem affected! Please consider upgrading your kernel to one that is patched with KPTI/KAISER\n";
             std::cout << "Check https://security.googleblog.com/2018/01/todays-cpu-vulnerability-what-you-need.html for more details\n";
             goto out;
         } else {
