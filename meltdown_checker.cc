@@ -218,8 +218,9 @@ static std::unordered_map<uintptr_t, std::string> build_symbol_map(std::string f
         std::string type, symbol;
 
         if (!(iss >> std::hex >> addr >> type >> symbol)) {
-            std::cout << "error in line: " << line << std::endl;
-            abort();
+            // lines that start with unexpected content like '(null) A irq_stack_union'
+            // will be ignored.
+            continue;
         } // error
         non_zero_addr |= addr;
 

@@ -46,7 +46,7 @@ inline int _xbegin(void) {
 
 __attribute__((always_inline))
 inline void _xend(void) {
-	 __asm__ __volatile__(".byte 0x0f,0x01,0xd5" ::: "memory");
+    __asm__ __volatile__(".byte 0x0f,0x01,0xd5" ::: "memory");
 }
 #endif
 
