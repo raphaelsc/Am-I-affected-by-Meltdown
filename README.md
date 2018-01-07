@@ -29,7 +29,9 @@ sudo sh -c "echo 0  > /proc/sys/kernel/kptr_restrict"
 Please open an issue if you have an idea on how to fallback to another approach in this scenario.
 
 #### Getting started
-Run *make* to compile the project
+***You need to have /boot partition mounted***
+
+Run `make` to compile the project
 
 #### Example output for a system affected by Meltdown:
 
