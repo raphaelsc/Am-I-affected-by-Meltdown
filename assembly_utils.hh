@@ -29,6 +29,27 @@
 
 #pragma once
 
+#if defined(HAS_COMPILER_RTM_SUPPORT)
+#include <immintrin.h>
+#else
+
+#warning "Using native impl. of TSX due to GCC version older than 4.8. No need to worry about it!"
+
+static constexpr int _XBEGIN_STARTED = ~0u;
+
+__attribute__((always_inline))
+inline int _xbegin(void) {
+    auto ret = _XBEGIN_STARTED;
+    __asm__ __volatile__(".byte 0xc7,0xf8 ; .long 0" : "+a" (ret) :: "memory");
+    return ret;
+}
+
+__attribute__((always_inline))
+inline void _xend(void) {
+	 __asm__ __volatile__(".byte 0x0f,0x01,0xd5" ::: "memory");
+}
+#endif
+
 // TODO: make it more reusable.
 __attribute__((always_inline))
 inline void __cpu_id(unsigned& eax, unsigned& ebx, unsigned& ecx) {

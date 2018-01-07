@@ -40,7 +40,6 @@
 #include <limits>
 #include <algorithm>
 #include <sys/mman.h>
-#include <immintrin.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/utsname.h>
