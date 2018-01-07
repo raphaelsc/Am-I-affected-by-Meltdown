@@ -206,7 +206,7 @@ static std::unordered_map<uintptr_t, std::string> build_symbol_map(std::string f
 
     std::ifstream infile(fname);
     if (!infile.is_open()) {
-        std::cout << "Failed to open " << fname << ". Unable to proceed.\n";
+        std::cout << "Failed to open " << fname << " due to: " << strerror(errno) << ". Unable to proceed.\n";
         abort();
     }
 
