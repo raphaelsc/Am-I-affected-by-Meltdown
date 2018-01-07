@@ -30,6 +30,7 @@ Please open an issue if you have an idea on how to fallback to another approach 
 
 #### Getting started
 Run *make* to compile the project
+
 Run *./meltdown-checker* to execute the program
 
 #### Example output for a system affected by Meltdown:
