@@ -1,6 +1,6 @@
 CC=g++
 CFLAGS=-I. --std=c++11 -O0 --no-pie -fPIC
-GCC_VER_GTE48 := $(shell echo `gcc -dumpversion | cut -f1-2 -d.` \>= 4.8 | bc )
+GCC_VER_GTE48 := $(shell expr `gcc -dumpversion | cut -f1 -d.` \>= 4.8)
 
 OBJ=meltdown_checker.o
 
