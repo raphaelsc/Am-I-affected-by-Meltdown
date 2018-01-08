@@ -44,8 +44,6 @@ make
 ./meltdown-checker
 ```
 
-Run *./meltdown-checker* to execute the program
-
 #### Example output for a system affected by Meltdown:
 
 ![Alt text](https://github.com/raphaelsc/Am-I-affected-by-Meltdown/blob/master/images/output.png)
