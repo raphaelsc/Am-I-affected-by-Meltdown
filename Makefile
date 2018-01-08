@@ -1,10 +1,10 @@
 CC=g++
 CFLAGS=-I. --std=c++11 -O0 --no-pie -fPIC
-GCC_VER_GTE48 := $(shell expr `gcc -dumpversion | cut -f1 -d.` \>= 4.8)
+CC_VER_GTE48 := $(shell expr `$(CC) -dumpversion | cut -f1 -d.` \>= 4.8)
 
 OBJ=meltdown_checker.o
 
-ifeq ($(GCC_VER_GTE48), 1)
+ifeq ($(CC_VER_GTE48), 1)
 CFLAGS += -mrtm -DHAS_COMPILER_RTM_SUPPORT
 endif
 

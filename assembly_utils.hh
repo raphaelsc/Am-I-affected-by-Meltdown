@@ -33,6 +33,8 @@
 #include <immintrin.h>
 #else
 
+#if !(defined(_XBEGIN_STARTED))
+
 #warning "Using native impl. of TSX due to GCC version older than 4.8. No need to worry about it!"
 
 static constexpr int _XBEGIN_STARTED = ~0u;
@@ -48,6 +50,8 @@ __attribute__((always_inline))
 inline void _xend(void) {
     __asm__ __volatile__(".byte 0x0f,0x01,0xd5" ::: "memory");
 }
+#endif
+
 #endif
 
 // TODO: make it more reusable.
