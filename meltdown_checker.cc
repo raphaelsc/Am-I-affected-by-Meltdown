@@ -29,6 +29,7 @@
 
 #include <cstdio>
 #include <unordered_map>
+#include <array>
 #include <string>
 #include <fstream>
 #include <iostream>
