@@ -19,6 +19,17 @@ something like KAISER patchset (https://lkml.org/lkml/2017/10/31/884) for exampl
 It works by using */proc/kallsyms* to find system call table and checking whether the address of a
 system call found by exploiting MELTDOWN match the respective one in */proc/kallsyms*.
 
+#### Getting started
+
+Clone, then run `make` to compile the project, then run `meltdown-checker`:
+
+```
+git clone https://github.com/raphaelsc/Am-I-affected-by-Meltdown.git
+cd ./Am-I-affected-by-Meltdown
+make
+taskset 0x1 ./meltdown-checker
+```
+
 #### What to do when you face:
   - `Unable to read /proc/kallsyms...`
   
@@ -32,17 +43,6 @@ system call found by exploiting MELTDOWN match the respective one in */proc/kall
     That could probably be because your system not having `/boot` mounted. This program relies on that partition and thus you'd need to mount your `/boot` partition first.
 
 *Please open an issue if you have an idea on how to fallback to another approach in this scenario.*
-
-#### Getting started
-
-Clone, then run `make` to compile the project, then run `meltdown-checker`:
-
-```
-git clone https://github.com/raphaelsc/Am-I-affected-by-Meltdown.git
-cd ./Am-I-affected-by-Meltdown
-make
-taskset 0x1 ./meltdown-checker
-```
 
 #### Example output for a system affected by Meltdown:
 
