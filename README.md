@@ -41,7 +41,7 @@ Clone, then run `make` to compile the project, then run `meltdown-checker`:
 git clone https://github.com/raphaelsc/Am-I-affected-by-Meltdown.git
 cd ./Am-I-affected-by-Meltdown
 make
-./meltdown-checker
+taskset 0x1 ./meltdown-checker
 ```
 
 #### Example output for a system affected by Meltdown:
