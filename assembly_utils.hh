@@ -107,11 +107,11 @@ inline void __speculative_byte_load(uintptr_t addr, char* dest) {
     asm __volatile__ (
         ".global __speculative_byte_load_exit \n\t"
         "%=:                              \n"
-        "xorq %%eax, %%eax                \n"
+        "xorl %%eax, %%eax                \n"
         "movb (%[addr]), %%al              \n"
-        "shlq $0xc, %%eax                 \n"
+        "shl $0xc, %%eax                 \n"
         "jz %=b                           \n"
-        "movq (%[dest], %%eax, 1), %%rbx   \n"
+        "movl (%[dest], %%eax, 1), %%ebx   \n"
         "__speculative_byte_load_exit:     \n"
         "nop                               \n"
         :
