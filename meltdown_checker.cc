@@ -79,7 +79,11 @@ static inline unsigned mem_size() {
 
 static void transaction_trap_mitigation(int cause, siginfo_t* info, void* uap) {
     ucontext_t* context = reinterpret_cast<ucontext_t*>(uap);
+#ifdef __x86_64__
     context->uc_mcontext.gregs[REG_RIP] = (uintptr_t)__speculative_byte_load_exit;
+#else
+    context->uc_mcontext.gregs[REG_EIP] = (uintptr_t)__speculative_byte_load_exit;
+#endif
 }
 
 static inline void setup_transaction_trap_mitigation() {
@@ -161,7 +165,7 @@ static uint8_t probe_one_syscall_table_address_byte(uintptr_t target_address, ch
 // Syscall table is valid if any entry matches the address in the symbol map.
 //
 static bool validate_syscall_table_entry(const void* data, const std::unordered_map<uintptr_t, std::string>& symbol_map) {
-    uint64_t* entry = (uint64_t*) data;
+    uintptr_t* entry = (uintptr_t*) data;
     uintptr_t ptr = reinterpret_cast<uintptr_t>(entry[0]);
 
     if (symbol_map.count(ptr)) {
