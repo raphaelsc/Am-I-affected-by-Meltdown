@@ -29,6 +29,10 @@
 
 #pragma once
 
+#if !(defined(__x86_64__) || defined(__i386__))
+# error x86-64 and i386 are the only supported architectures
+#endif
+
 #if defined(HAS_COMPILER_RTM_SUPPORT)
 #include <immintrin.h>
 #else
@@ -82,6 +86,7 @@ inline void __clflush(const char *address)
 // to help with software-based trap mitigation, when TSX isn't available.
 extern char __speculative_byte_load_exit[];
 
+#ifdef __x86_64__
 inline void __speculative_byte_load(uintptr_t addr, char* dest) {
     asm __volatile__ (
         ".global __speculative_byte_load_exit \n\t"
@@ -97,6 +102,23 @@ inline void __speculative_byte_load(uintptr_t addr, char* dest) {
         :  [addr] "r" (addr), [dest] "r" (dest)
         :  "%rax", "%rbx");
 }
+#else
+inline void __speculative_byte_load(uintptr_t addr, char* dest) {
+    asm __volatile__ (
+        ".global __speculative_byte_load_exit \n\t"
+        "%=:                              \n"
+        "xorq %%eax, %%eax                \n"
+        "movb (%[addr]), %%al              \n"
+        "shlq $0xc, %%eax                 \n"
+        "jz %=b                           \n"
+        "movq (%[dest], %%eax, 1), %%rbx   \n"
+        "__speculative_byte_load_exit:     \n"
+        "nop                               \n"
+        :
+        :  [addr] "r" (addr), [dest] "r" (dest)
+        :  "%eax", "%ebx");
+}
+#endif
 
 __attribute__((always_inline))
 inline unsigned long __measure_load_execution(const char *address) {

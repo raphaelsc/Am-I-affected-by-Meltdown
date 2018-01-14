@@ -49,10 +49,6 @@
 #include <sys/syscall.h>
 #include "assembly_utils.hh"
 
-#if !(defined(__x86_64__))
-# error "x86-64 is the only arch supported at the moment. We'll add support for i386 soon. Sorry :-("
-#endif
-
 static const char* kernel_symbols_file = "/proc/kallsyms";
 static const char* system_map_file_prefix = "/boot/System.map-";
 static const char* syscall_table_symbol = "sys_call_table";
